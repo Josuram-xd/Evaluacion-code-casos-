@@ -13,11 +13,11 @@ import * as fs from "fs";
 import { BiciTaller } from "./bicitaller";
 import { FilaFlota } from "./entidades";
 
-function sinComentario(linea: string): string {
+export function sinComentario(linea: string): string {
   return linea.split("#")[0].trim();
 }
 
-function leerFlota(lineas: string[], iInicial: number): { filas: FilaFlota[]; siguiente: number } {
+export function leerFlota(lineas: string[], iInicial: number): { filas: FilaFlota[]; siguiente: number } {
   let i = iInicial;
   while (i < lineas.length && lineas[i].trim() !== "FLOTA") i++;
   i++;
@@ -32,7 +32,7 @@ function leerFlota(lineas: string[], iInicial: number): { filas: FilaFlota[]; si
   return { filas, siguiente: i + 1 }; // saltar la línea "---"
 }
 
-function ejecutarComando(taller: BiciTaller, cruda: string): string {
+export function ejecutarComando(taller: BiciTaller, cruda: string): string {
   const espacio = cruda.indexOf(" ");
   const cmd = (espacio === -1 ? cruda : cruda.slice(0, espacio)).toUpperCase();
   const resto = espacio === -1 ? "" : cruda.slice(espacio + 1).trim();
@@ -87,4 +87,6 @@ function main(): void {
   }
 }
 
-main();
+if (require.main === module) {
+  main();
+}

@@ -23,4 +23,4 @@ Ver detalle en `Back/NOTAS.md`.
 
 ## `Front (posible)/`
 
-Opcional, no implementada todavía. Es una carpeta reservada por si se quiere construir una interfaz de escritorio con **Tkinter** que reutilice la lógica de `Back/` en vez de reimplementarla (mismas clases, mismos métodos — solo cambia cómo se muestra el resultado). El detalle de cómo se conectaría está en `Front (posible)/NOTAS.md`.
+Interfaz de escritorio en **Tkinter** (`app.py`) que reutiliza `Back/` tal cual — mismo `BiciTaller`, mismo `ejecutar_comando()` que usa la consola — y la muestra como una ventana con un campo de comando y una transcripción, en vez de imprimir por stdout. Ejecutar con `python app.py` desde esa carpeta. Detalle en `Front (posible)/NOTAS.md`.

@@ -1,66 +1,23 @@
-# BiciTaller — Front (posible) en HTML + CSS
+# Front de BiciTaller — HTML + CSS
 
-No implementado: esta es la guía de cómo se construiría, reutilizando por completo la lógica de `../Back/` sin duplicarla.
+Cinco archivos: `server.ts`, `index.html`, `styles.css`, `app.js`, más `package.json`/`tsconfig.json` propios de esta carpeta.
 
-## Dos formas de conectar
+## Cómo se conecta con `Back/`
 
-**(a) Servidor local como puente.** Un pequeño servidor (Node `http` o Express) importa las clases de `../Back/` y expone cada operación como un endpoint (ej. `POST /recibir-en-taller`). La página `index.html` + `styles.css` hace `fetch()` a esos endpoints y pinta el resultado en el DOM.
+`server.ts` es un servidor HTTP mínimo (solo el módulo `http` de Node, sin Express, para no sumar dependencias) que:
 
-**(b) Compilar `Back/` directamente para el navegador, sin servidor.** Se revisaron los imports de `estructuras.ts`, `entidades.ts`, `bicitaller.ts` y `reportes.ts`: ninguno usa una API de Node — solo `main.ts` importa `fs` (para leer el archivo de comandos por consola). Eso significa que `estructuras.ts` + `entidades.ts` + `bicitaller.ts` + `reportes.ts` se pueden compilar tal cual con `tsc` (target ES2020, module esnext) o pasar por un bundler simple (esbuild/vite) y cargarse directo en un `<script type="module">` del navegador, instanciando `BiciTaller` ahí mismo. **Se recomienda la opción (b)** para este caso: es más simple, no requiere levantar ni mantener un servidor, y toda la lógica de negocio ya es JS/TS puro sin dependencias de Node.
+1. Al arrancar, importa `BiciTaller` de `../Back/bicitaller.ts` y `leerFlota`/`ejecutarComando` de `../Back/main.ts` — las mismas funciones que usa la consola —, carga `../Back/taller.txt` y crea una única instancia de `BiciTaller` que vive en memoria mientras el servidor está prendido.
+2. Sirve `index.html`, `styles.css` y `app.js` como archivos estáticos.
+3. Expone `POST /comando`: recibe `{ "linea": "..." }`, se lo pasa tal cual a `ejecutarComando(taller, linea)` — la misma función que usa `main.ts` para procesar `taller.txt` — y responde `{ "salida": "..." }` con lo que esa función devolvió.
 
-## Boceto de `index.html`
+`app.js` es JavaScript plano de navegador (no hay que compilar nada para el lado del cliente): toma lo que el usuario escribe, hace `fetch('/comando', ...)` y pinta la respuesta en el `<pre>` de la página. No conoce ni reimplementa ninguna regla de negocio — solo llama al servidor.
 
-```html
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <title>BiciTaller</title>
-  <link rel="stylesheet" href="styles.css" />
-</head>
-<body>
-  <h1>BiciTaller</h1>
+## Cómo ejecutar
 
-  <form id="form-recibir">
-    <input id="codigo-recibir" placeholder="Código, ej. BIC-0412" />
-    <button type="submit">Recibir en taller</button>
-  </form>
-
-  <button id="btn-iniciar">Iniciar reparación</button>
-  <button id="btn-reporte">Reporte</button>
-
-  <pre id="log"></pre>
-
-  <script type="module" src="./app.js"></script>
-</body>
-</html>
+```bash
+cd Caso1/TypeScript/Front (posible)
+npm install
+npx ts-node server.ts        # o: npx tsx server.ts si ts-node falla
 ```
 
-## Boceto de `app.js` (o `app.ts` compilado)
-
-```js
-import { BiciTaller } from "./bicitaller.js"; // salida de compilar Back/ para el navegador
-
-const taller = new BiciTaller();
-const log = document.getElementById("log");
-
-function escribir(mensaje) {
-  log.textContent += mensaje + "\n";
-}
-
-document.getElementById("form-recibir").addEventListener("submit", (e) => {
-  e.preventDefault();
-  const codigo = document.getElementById("codigo-recibir").value;
-  escribir(taller.recibirEnTaller(codigo));
-});
-
-document.getElementById("btn-iniciar").addEventListener("click", () => {
-  escribir(taller.iniciarReparacion());
-});
-
-document.getElementById("btn-reporte").addEventListener("click", () => {
-  escribir(taller.reporte());
-});
-```
-
-El patrón se repite para cada operación: un control de formulario, un listener que llama al método correspondiente de la misma instancia de `BiciTaller`, y el string devuelto (idéntico al que hoy imprime `main.ts` por consola) se muestra en la página en vez de en la terminal.
+Y abrir `http://localhost:4000` en el navegador.

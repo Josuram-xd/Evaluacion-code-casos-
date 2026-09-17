@@ -25,4 +25,4 @@ Ver detalle en `Back/NOTAS.md`.
 
 ## `Front (posible)/`
 
-Opcional, no implementada todavía. Es una carpeta reservada por si se quiere construir una interfaz web en **HTML + CSS** que reutilice la lógica de `Back/` en vez de reimplementarla. El detalle de cómo se conectaría (y por qué en este caso se puede hacer sin servidor intermedio) está en `Front (posible)/NOTAS.md`.
+Interfaz web en **HTML + CSS** (`index.html`/`styles.css`/`app.js`) servida por `server.ts`, un servidor mínimo con el módulo `http` de Node (sin Express) que reutiliza `BiciTaller` y `ejecutarComando()` de `Back/` tal cual, exponiéndolos como `POST /comando`. Ejecutar con `npm install && npx ts-node server.ts` (o `npx tsx server.ts`) desde esa carpeta y abrir `http://localhost:4000`. Detalle en `Front (posible)/NOTAS.md`.

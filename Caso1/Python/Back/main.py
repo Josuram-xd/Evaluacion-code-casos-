@@ -17,7 +17,7 @@ def _sin_comentario(linea):
     return linea.split("#", 1)[0].strip()
 
 
-def _leer_flota(lineas, i):
+def leer_flota(lineas, i):
     while i < len(lineas) and lineas[i].strip() != "FLOTA":
         i += 1
     i += 1
@@ -32,7 +32,7 @@ def _leer_flota(lineas, i):
     return filas, i + 1  # saltar la línea "---"
 
 
-def _ejecutar_comando(taller, cruda):
+def ejecutar_comando(taller, cruda):
     partes = cruda.split(maxsplit=2)
     cmd = partes[0].upper()
 
@@ -68,7 +68,7 @@ def main():
         lineas = [linea.rstrip("\n") for linea in f]
 
     taller = BiciTaller()
-    filas, i = _leer_flota(lineas, 0)
+    filas, i = leer_flota(lineas, 0)
     for mensaje in taller.cargar_flota(filas):
         print(mensaje)
 
@@ -78,7 +78,7 @@ def main():
         if not cruda:
             continue
         print(f"> {cruda}")
-        print(_ejecutar_comando(taller, cruda))
+        print(ejecutar_comando(taller, cruda))
         print()
 
 

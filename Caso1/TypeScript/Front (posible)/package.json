@@ -1,0 +1,15 @@
+{
+  "name": "caso1-bicitaller-front",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Front HTML+CSS para BiciTaller (Caso 1), servido por un servidor http minimo que reutiliza el Back",
+  "scripts": {
+    "start": "ts-node server.ts",
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "ts-node": "^10.9.0",
+    "@types/node": "^20.0.0"
+  }
+}
