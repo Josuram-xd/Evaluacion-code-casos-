@@ -1,0 +1,14 @@
+{
+  "name": "caso2-central-ascensores-front",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Front HTML+CSS minimo para CentralAscensores, conectado al Back por un servidor local (sin reglas de negocio propias)",
+  "scripts": {
+    "start": "tsx server.ts"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "tsx": "^4.7.0",
+    "@types/node": "^20.11.0"
+  }
+}

@@ -26,7 +26,7 @@ function quitarComentario(linea: string): string {
   return linea.split("#")[0].trim();
 }
 
-function cargarArchivo(ruta: string): { filasParque: string[][]; comandos: string[] } {
+export function cargarArchivo(ruta: string): { filasParque: string[][]; comandos: string[] } {
   const crudo = fs.readFileSync(ruta, "utf-8").split(/\r?\n/);
   const lineas = crudo.map(quitarComentario).filter((l) => l.length > 0);
 
@@ -43,6 +43,44 @@ function cargarArchivo(ruta: string): { filasParque: string[][]; comandos: strin
   return { filasParque, comandos };
 }
 
+/**
+ * Ejecuta una linea de comando sobre `central` y devuelve el resultado como
+ * arreglo de lineas (una sola para la mayoria de comandos, varias para
+ * ABORTAR y REPORTE). No imprime nada: la usan tanto main.ts como el Front
+ * para no duplicar el despacho de comandos en dos lugares.
+ */
+export function procesarLinea(central: CentralAscensores, linea: string): string[] {
+  const partes = linea.split(/\s+/);
+  const cmd = partes[0].toUpperCase();
+  try {
+    switch (cmd) {
+      case "LLAMADA": {
+        const [, codigo, tipo, minuto] = partes;
+        return [central.registrarLlamada(codigo, tipo as TipoLlamada, Number(minuto))];
+      }
+      case "ATENDER":
+        return [central.atenderSiguiente(Number(partes[1]))];
+      case "PASO":
+        return [central.ejecutarPaso(Number(partes[1]))];
+      case "DESHACER":
+        return [central.deshacerUltimo()];
+      case "ABORTAR":
+        return central.abortarRescate(partes.slice(1).join(" "));
+      case "CERRAR":
+        return [central.cerrarLlamada()];
+      case "REPORTE":
+        return central.reporte().split("\n");
+      default:
+        return [`comando desconocido: ${cmd}`];
+    }
+  } catch (err) {
+    if (err instanceof RechazoOperacion) {
+      return [`RECHAZADA ${err.message}`];
+    }
+    throw err;
+  }
+}
+
 function ejecutar(ruta: string): void {
   const { filasParque, comandos } = cargarArchivo(ruta);
   const central = new CentralAscensores();
@@ -50,47 +88,22 @@ function ejecutar(ruta: string): void {
 
   for (const linea of comandos) {
     console.log(`> ${linea}`);
-    const partes = linea.split(/\s+/);
-    const cmd = partes[0].toUpperCase();
-    try {
-      switch (cmd) {
-        case "LLAMADA": {
-          const [, codigo, tipo, minuto] = partes;
-          console.log(" ", central.registrarLlamada(codigo, tipo as TipoLlamada, Number(minuto)));
-          break;
-        }
-        case "ATENDER":
-          console.log(" ", central.atenderSiguiente(Number(partes[1])));
-          break;
-        case "PASO":
-          console.log(" ", central.ejecutarPaso(Number(partes[1])));
-          break;
-        case "DESHACER":
-          console.log(" ", central.deshacerUltimo());
-          break;
-        case "ABORTAR":
-          for (const l of central.abortarRescate(partes.slice(1).join(" "))) {
-            console.log(" ", l);
-          }
-          break;
-        case "CERRAR":
-          console.log(" ", central.cerrarLlamada());
-          break;
-        case "REPORTE":
-          console.log(central.reporte());
-          break;
-        default:
-          console.log(`  comando desconocido: ${cmd}`);
-      }
-    } catch (err) {
-      if (err instanceof RechazoOperacion) {
-        console.log(`  RECHAZADA ${err.message}`);
-      } else {
-        throw err;
+    const cmd = linea.split(/\s+/)[0].toUpperCase();
+    const resultado = procesarLinea(central, linea);
+    if (cmd === "REPORTE") {
+      console.log(resultado.join("\n"));
+    } else {
+      for (const l of resultado) {
+        console.log(" ", l);
       }
     }
   }
 }
 
-const ruta = process.argv[2] ?? "central.txt";
-ejecutar(ruta);
+// Solo corre el archivo de ejemplo cuando este modulo se ejecuta
+// directamente (node main.js / tsx main.ts); al importarlo desde el Front
+// para reusar cargarArchivo/procesarLinea, esto no debe dispararse.
+if (require.main === module) {
+  const ruta = process.argv[2] ?? "central.txt";
+  ejecutar(ruta);
+}

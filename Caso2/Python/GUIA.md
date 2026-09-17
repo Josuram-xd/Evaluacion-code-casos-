@@ -21,6 +21,6 @@ python main.py central.txt
 
 Detalle de cada archivo y cómo leer la salida: [`Back/NOTAS.md`](Back/NOTAS.md).
 
-## `Front (posible)/` — interfaz gráfica (opcional, no implementada)
+## `Front (posible)/` — interfaz gráfica (opcional, ya implementada)
 
-Carpeta reservada por si se quiere una ventana de escritorio (Tkinter) en vez de la consola. No hay código aquí todavía: [`Front (posible)/NOTAS.md`](Front%20(posible)/NOTAS.md) explica cómo se construiría reutilizando las clases de `Back/` sin reescribir la lógica de negocio.
+Ventana de escritorio en Tkinter (`app.py`) que reutiliza `Back/` tal cual, sin reescribir ninguna regla: un campo de comando + botón "Ejecutar" + una transcripción tipo consola. Se ejecuta con `python app.py` desde esa carpeta. Detalle en [`Front (posible)/NOTAS.md`](<Front (posible)/NOTAS.md>).

@@ -1,48 +1,28 @@
-# CentralAscensores — Front (posible) en Tkinter
+# CentralAscensores — Front en Tkinter
 
-No hay código en esta carpeta. Esto es una guía de cómo se construiría una interfaz de escritorio con **Tkinter** (librería estándar de Python, no requiere instalar nada) que reutilice `../Back/` tal cual — sin reescribir ninguna regla de negocio, solo envolviendo `CentralAscensores` en widgets.
+Implementado. `app.py` es una ventana Tkinter (librería estándar, no instala nada) que reutiliza `../Back/` tal cual: importa `CentralAscensores` y la función `procesar_linea`/`cargar_archivo` que ya usa el runner de consola, y muestra la conversación en una caja de texto en vez de imprimirla en la terminal. No hay ninguna regla de negocio reescrita aquí — el Front solo despacha texto al mismo `central.py` de siempre.
 
-## Cómo conectar con el Back
+## Cómo se conecta
 
 ```python
-import sys
-sys.path.append("../Back")   # o mover Back a un paquete instalable
-
+sys.path.insert(0, "../Back")
 from central import CentralAscensores
-from entidades import RechazoOperacion
-
-central = CentralAscensores()
-central.cargar_parque(filas_leidas_de_algun_lado)
+from main import cargar_archivo, procesar_linea   # el mismo despachador que usa la consola
 ```
 
-La UI nunca reimplementa `Lista`/`Cola`/`Pila` ni las reglas R1-R7: solo llama a los métodos de `CentralAscensores` y muestra el resultado (o el mensaje de `RechazoOperacion`) en un widget en vez de un `print()`.
+Al arrancar, `app.py` carga `../Back/central.txt` (solo el bloque `PARQUE`) para no empezar con el parque vacío, y cada línea que se escribe en el campo de texto se pasa tal cual a `procesar_linea(central, linea)` — es exactamente lo que hace `main.py` por cada línea del archivo de comandos, solo que aquí la línea la escribe una persona en vez de venir de un `.txt`.
 
-## Qué widgets tendrían sentido
+## Qué hay en la ventana
 
-- Dos `Listbox` (o `Treeview`) mostrando el contenido de `central.cola_emergencia` y `central.cola_mantenimiento` — hay que agregar un método de solo lectura en `Cola` para recorrerla sin desencolar, si no existe ya.
-- Un botón **"Atender siguiente"** que llame `central.atender_siguiente(minuto_actual)` y muestre el resultado.
-- Cinco botones **"Paso 1".."Paso 5"** (o uno solo con un spinner) que llamen `central.ejecutar_paso(n)`, deshabilitando los pasos que ya no aplican según el tope real de `central.pila_protocolo`.
-- Un botón **"Abortar"** que pida el motivo (`simpledialog.askstring`) y llame `central.abortar_rescate(motivo)`, mostrando cada línea de la traza en un `Text`.
-- Un botón **"Reporte"** que llame `central.reporte()` y lo muestre en un `Text` de solo lectura.
+- Un área de transcripción (`ScrolledText`) que va acumulando cada comando y su resultado, igual que la consola.
+- Un campo de texto + botón "Ejecutar" (o Enter) para escribir cualquier comando de la gramática del caso: `LLAMADA`, `ATENDER`, `PASO`, `DESHACER`, `ABORTAR`, `CERRAR`, `REPORTE`.
+- Un botón "Reporte" como atajo.
 
-## Boceto (ilustrativo, no probado)
+## Cómo correrlo
 
-```python
-import tkinter as tk
-from tkinter import messagebox
-
-def on_atender():
-    try:
-        resultado = central.atender_siguiente(minuto_actual())
-        salida.insert(tk.END, resultado + "\n")
-    except RechazoOperacion as e:
-        messagebox.showwarning("Rechazada", str(e))
-
-ventana = tk.Tk()
-salida = tk.Text(ventana)
-salida.pack()
-tk.Button(ventana, text="Atender siguiente", command=on_atender).pack()
-ventana.mainloop()
+```
+cd "Python/Front (posible)"
+python app.py
 ```
 
-El patrón se repite igual para los demás botones: llamar al método de `CentralAscensores`, capturar `RechazoOperacion`, mostrar el resultado en un widget.
+No necesita `pip install` — Tkinter viene con Python. Si `python` no tiene Tkinter compilado (pasa en algunas instalaciones minimalistas de Linux), instalar el paquete del sistema (`sudo apt install python3-tk` o equivalente); en Windows con el instalador oficial de python.org ya viene incluido.

@@ -1,49 +1,31 @@
-# CentralAscensores — Front (posible) en HTML + CSS
+# CentralAscensores — Front en HTML + CSS
 
-No hay código en esta carpeta. Esto es una guía de cómo se construiría una página web que reutilice `../Back/` sin reescribir la lógica de negocio.
+Implementado. Es un puente HTTP mínimo: `server.ts` usa solo el módulo `http` de Node (sin Express) para servir `index.html`/`styles.css`/`app.js` y exponer un único endpoint, `POST /comando`, que reutiliza el mismo despachador de comandos que usa la consola. Ninguna regla de negocio vive en esta carpeta — `server.ts` importa `CentralAscensores` y `procesarLinea`/`cargarArchivo` directamente de `../Back/`.
 
-## Dos formas de conectar
+## Por qué un servidor y no directo en el navegador
 
-**(a) Servidor local pequeño (Node/Express) como puente HTTP.**
-Un `server.ts` importa `CentralAscensores` de `../Back/central.ts`, mantiene una instancia en memoria y expone endpoints (`POST /llamadas`, `POST /atender`, `POST /paso/:n`, `POST /abortar`, `GET /reporte`) que internamente llaman a los métodos de la clase y devuelven JSON. El HTML+CSS hace `fetch()` a esos endpoints.
+`central.ts`/`entidades.ts`/`estructuras.ts`/`reportes.ts` no dependen de Node y sí se podrían cargar directo en el navegador, pero `main.ts` (de donde sale `procesarLinea`, ya con todo el parseo de comandos hecho) sí usa `fs` para leer `central.txt`. Reescribir ese despacho en el navegador habría duplicado lógica; exponerlo por un servidor de 60 líneas es más simple y cumple la regla de no reimplementar nada.
 
-**(b) Usar `Back/` directamente desde el navegador, sin servidor.**
-Revisando los imports: `central.ts`, `entidades.ts`, `estructuras.ts` y `reportes.ts` no importan nada de Node (`fs` solo lo usa `main.ts`, que no hace falta para el front). Eso significa que se pueden compilar a JS (`tsc --module es2020` o con `esbuild`/`vite`) y cargar directo con `<script type="module">`, sin ningún servidor: el HTML llama a `new CentralAscensores()` en el propio navegador y usa un `<input type="file">` o botones para simular la entrada, en vez de leer `central.txt` desde disco.
+## Cómo se conecta
 
-**Recomendación:** la opción (b) es más simple para este caso — es un programa autocontenido en memoria, no necesita persistencia ni un backend real, así que montar un servidor solo para reenviar llamadas a la misma clase es una capa innecesaria. (a) tendría sentido si más adelante se quisiera compartir estado entre varios usuarios o persistir datos.
-
-## Boceto de `index.html` + `app.js` (opción b, ilustrativo)
-
-```html
-<!-- index.html -->
-<div id="colas"></div>
-<button id="btnAtender">Atender siguiente</button>
-<div id="pasos"></div>
-<button id="btnAbortar">Abortar</button>
-<pre id="salida"></pre>
-<script type="module" src="./app.js"></script>
+```ts
+import { CentralAscensores } from "../Back/central";
+import { cargarArchivo, procesarLinea } from "../Back/main";
 ```
 
-```js
-// app.js (compilado desde central.ts/entidades.ts/estructuras.ts/reportes.ts)
-import { CentralAscensores } from "./dist/central.js";
-import { RechazoOperacion } from "./dist/entidades.js";
+- Al arrancar, el servidor crea un `CentralAscensores`, lo carga con `../Back/central.txt` y lo mantiene en memoria mientras el proceso vive.
+- `POST /comando` con `{ "linea": "LLAMADA ASC-118 EMERGENCIA 480" }` corre `procesarLinea(central, linea)` y devuelve `{ "salida": [...] }` — la misma lista de líneas que `main.ts` imprimiría.
+- `POST /reiniciar` vuelve a cargar el parque desde cero.
+- `index.html` + `app.js` son una consola web: un `<input>`, un botón "Ejecutar" y un `<pre>` que va acumulando la transcripción, haciendo `fetch("/comando", ...)` por cada línea. `styles.css` es solo apariencia.
 
-const central = new CentralAscensores();
-central.cargarParque(filasIniciales);
+## Cómo correrlo
 
-document.getElementById("btnAtender").onclick = () => {
-  try {
-    const resultado = central.atenderSiguiente(minutoActual());
-    log(resultado);
-  } catch (e) {
-    if (e instanceof RechazoOperacion) log("RECHAZADA " + e.message);
-  }
-};
-
-function log(texto) {
-  document.getElementById("salida").textContent += texto + "\n";
-}
+```
+cd "TypeScript/Front (posible)"
+npm install
+npm start                 # = npx tsx server.ts
 ```
 
-Un botón por paso (1 a 5) llamaría `central.ejecutarPaso(n)` con el mismo patrón, y `styles.css` solo se encarga de la presentación (paneles de colas, resaltar el paso actual, etc.) — la lógica de negocio sigue viviendo íntegramente en los módulos de `Back/`.
+Abrir `http://localhost:5175`. Se probó con `curl -X POST http://localhost:5175/comando -d '{"linea":"LLAMADA ASC-118 EMERGENCIA 480"}'` y la salida coincide con la de la consola.
+
+`tsconfig.json` de esta carpeta es solo para que el editor tipe correctamente `../Back/*.ts` (`noEmit: true`); no hace falta compilar con `tsc` porque se ejecuta con `tsx`, igual que se hizo con el Back de Caso3 por la incompatibilidad de `ts-node` con Node 24.

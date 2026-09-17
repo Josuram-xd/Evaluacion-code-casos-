@@ -49,6 +49,36 @@ def cargar_archivo(ruta: str):
     return filas_parque, comandos
 
 
+def procesar_linea(central: CentralAscensores, linea: str) -> list[str]:
+    """Ejecuta una linea de comando sobre `central` y devuelve el resultado
+    como lista de lineas (una sola para la mayoria de comandos, varias para
+    ABORTAR y REPORTE). No imprime nada: la usan tanto main.py como el Front
+    para no duplicar el despacho de comandos en dos lugares.
+    """
+    partes = linea.split()
+    cmd = partes[0].upper()
+    try:
+        if cmd == "LLAMADA":
+            _, codigo, tipo, minuto = partes
+            return [central.registrar_llamada(codigo, tipo, int(minuto))]
+        elif cmd == "ATENDER":
+            return [central.atender_siguiente(int(partes[1]))]
+        elif cmd == "PASO":
+            return [central.ejecutar_paso(int(partes[1]))]
+        elif cmd == "DESHACER":
+            return [central.deshacer_ultimo()]
+        elif cmd == "ABORTAR":
+            return central.abortar_rescate(" ".join(partes[1:]))
+        elif cmd == "CERRAR":
+            return [central.cerrar_llamada()]
+        elif cmd == "REPORTE":
+            return central.reporte().splitlines()
+        else:
+            return [f"comando desconocido: {cmd}"]
+    except RechazoOperacion as err:
+        return [f"RECHAZADA {err}"]
+
+
 def ejecutar(ruta: str) -> None:
     filas_parque, comandos = cargar_archivo(ruta)
     central = CentralAscensores()
@@ -56,29 +86,13 @@ def ejecutar(ruta: str) -> None:
 
     for linea in comandos:
         print(f"> {linea}")
-        partes = linea.split()
-        cmd = partes[0].upper()
-        try:
-            if cmd == "LLAMADA":
-                _, codigo, tipo, minuto = partes
-                print(" ", central.registrar_llamada(codigo, tipo, int(minuto)))
-            elif cmd == "ATENDER":
-                print(" ", central.atender_siguiente(int(partes[1])))
-            elif cmd == "PASO":
-                print(" ", central.ejecutar_paso(int(partes[1])))
-            elif cmd == "DESHACER":
-                print(" ", central.deshacer_ultimo())
-            elif cmd == "ABORTAR":
-                for l in central.abortar_rescate(" ".join(partes[1:])):
-                    print(" ", l)
-            elif cmd == "CERRAR":
-                print(" ", central.cerrar_llamada())
-            elif cmd == "REPORTE":
-                print(central.reporte())
-            else:
-                print(f"  comando desconocido: {cmd}")
-        except RechazoOperacion as err:
-            print(f"  RECHAZADA {err}")
+        cmd = linea.split()[0].upper()
+        resultado = procesar_linea(central, linea)
+        if cmd == "REPORTE":
+            print("\n".join(resultado))
+        else:
+            for l in resultado:
+                print(" ", l)
 
 
 if __name__ == "__main__":

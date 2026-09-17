@@ -22,6 +22,6 @@ npx ts-node main.ts central.txt        # o: npx tsc && node dist/main.js central
 
 Detalle de cada archivo: [`Back/NOTAS.md`](Back/NOTAS.md).
 
-## `Front (posible)/` — interfaz web (opcional, no implementada)
+## `Front (posible)/` — interfaz web (opcional, ya implementada)
 
-Carpeta reservada por si se quiere una página HTML+CSS en vez de la consola. No hay código aquí todavía: [`Front (posible)/NOTAS.md`](Front%20(posible)/NOTAS.md) explica cómo se conectaría con `Back/` (directo en el navegador, sin servidor, porque la lógica no depende de Node — solo `main.ts` usa `fs`).
+Página HTML+CSS servida por un puente HTTP mínimo (`server.ts`, solo el módulo `http` de Node, sin Express) que reutiliza `../Back/central.ts` y `../Back/main.ts` sin reescribir ninguna regla. Se ejecuta con `npm install && npm start` desde esa carpeta y se abre en `http://localhost:5175`. Detalle en [`Front (posible)/NOTAS.md`](<Front (posible)/NOTAS.md>).
