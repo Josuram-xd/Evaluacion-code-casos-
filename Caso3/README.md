@@ -1,142 +1,40 @@
-# Builder 3 — CuraduriaTramites
+# Caso 3 — CuraduriaTramites
 
-> Guía general del repositorio: [`../README.md`](../README.md). Fuente de verdad completa: [`Caso_Estudio_3.pdf`](Caso_Estudio_3.pdf). Este README es un resumen operativo; ante cualquier ambigüedad, el PDF manda.
+Una curaduría urbana recibe solicitudes de licencia de construcción. Cada solicitud se convierte en un **expediente** que pasa, en orden fijo, por cuatro dependencias (`RECEPCION -> JURIDICA -> TECNICA -> URBANISTICA`) antes de llegar a `RESOLUCION`. Cada dependencia atiende por orden de llegada. El expediente crece con **folios** numerados de forma consecutiva que nunca se borran ni se renumeran (si quedan sin efecto, se anulan). Cuando una dependencia encuentra observaciones, **devuelve** el expediente a la dependencia inmediatamente anterior según la ruta realmente recorrida. Este proyecto simula ese trámite: el **expediente** (sus folios), las **bandejas** de cada dependencia y ese **retroceso**.
 
-## 1. Contexto
+Las tres estructuras son propias (sin `list`/`Array` como backing, sin `Stack`/`Queue`/`deque`):
 
-Una curaduría urbana recibe solicitudes de licencia de construcción. Cada solicitud se radica y se convierte en un **expediente** que pasa, en orden fijo, por cuatro dependencias: `RECEPCIÓN -> JURÍDICA -> TÉCNICA -> URBANÍSTICA`, y solo entonces llega a `RESOLUCIÓN`. Cada dependencia tiene su propia bandeja de entrada y atiende en el orden de llegada. El expediente crece con **folios numerados consecutivamente que nunca se borran ni renumeran** (si quedan sin efecto, se anulan). Cuando una dependencia encuentra observaciones, **devuelve** el expediente a la dependencia anterior (y si allí lo devuelven otra vez, retrocede un paso más).
+- **Lista enlazada** (una por expediente) → los folios: se agregan al final, se recorren completos para imprimir, y se marcan como anulados sin eliminarse ni renumerarse.
+- **Cola** (una por dependencia, más una cola general de represamiento) → la bandeja de entrada de cada dependencia: FIFO estricto.
+- **Pila** (una por expediente) → la ruta recorrida: devolver es volver sobre los pasos, la última dependencia visitada es la primera a la que se regresa (LIFO).
 
-Debes construir la aplicación **CuraduriaTramites**, que controla el expediente, las bandejas y ese retroceso.
+Hay dos implementaciones equivalentes, ambas leyendo el mismo `tramites.txt` y produciendo la misma salida (verificado ejecutando ambas):
 
-## 2. Estructuras de datos exigidas (las tres, obligatorias)
+- `Python/Back/` — `estructuras.py` (Lista/Cola/Pila genéricas), `entidades.py` (Folio y Expediente, con su propia lista de folios y su propia pila de ruta), `curaduria.py` (solo la clase orquestadora `CuraduriaTramites`: bandejas por dependencia, represamiento, reglas R1-R7, RF-01..RF-08), `reportes.py` (armado del reporte/métricas), `main.py` (runner). Ejecutar con `python main.py tramites.txt`.
+- `TypeScript/Back/` — mismos módulos en `.ts` (`estructuras.ts`, `entidades.ts`, `curaduria.ts`, `reportes.ts`, `main.ts`). Ejecutar con `npx --yes tsx main.ts tramites.txt` (o `npx tsc && node dist/main.js tramites.txt`).
 
-| Estructura | Qué modela | Por qué |
-|---|---|---|
-| **Lista enlazada** | Folios de cada expediente, en orden de incorporación. | Se agregan al final, se recorre completa para imprimir, y los folios se anulan sin eliminarse ni renumerarse. |
-| **Cola** (una por dependencia) | Bandeja de entrada de cada dependencia. | FIFO: se atiende en el orden en que llegó a esa dependencia. |
-| **Pila** (una por expediente) | Ruta ya recorrida por el expediente. | Devolver = volver sobre los pasos: la última dependencia visitada es la primera a la que se regresa. LIFO. |
+## Preguntas de análisis
 
-Importante: **la lista de folios y la pila de ruta son por expediente** (no globales); las colas son una por dependencia. Prohibido usar `List`, `ArrayList`, `LinkedList`, `Stack`, `Queue`, `deque` de la librería estándar.
+**1. ¿Por qué la ruta del expediente se modela con una pila y no con un contador de etapa? Escenario de devoluciones sucesivas donde el contador daría un resultado incorrecto.**
 
-## 3. Datos de un expediente y de un folio
+Un contador de etapa solo guarda la posición *actual*, no el historial de cómo se llegó ahí. Nuestro `avanzar()` apila la dependencia destino cada vez que se invoca, incluso si esa dependencia ya había sido visitada antes en el mismo expediente; `devolver()` simplemente desapila. Eso hace que la pila sea, en todo momento, un registro exacto de la secuencia real de visitas, mientras que un contador solo puede representar "en qué paso voy", perdiendo cuántas veces se pasó por cada una. Escenario concreto: un expediente avanza RECEPCION→JURIDICA→TECNICA, es devuelto a JURIDICA, avanza otra vez a TECNICA, y es devuelto una segunda vez. Con la pila, en ese punto `ruta` contiene `[RECEPCION, JURIDICA]` y el tope (JURIDICA) es exactamente la dependencia correcta a la que se debe regresar. Un contador de etapa que intente calcular "dependencia anterior" a partir de aritmética sobre el total de avances menos el total de devoluciones (en vez de sobre la secuencia real) se desincroniza apenas hay un avance después de una devolución previa: el número de devoluciones acumuladas (que usamos para R3 y nunca se resetea) ya no corresponde a "cuántos pasos hay que retroceder desde la posición máxima", porque esa posición máxima cambió con el reavance. La pila no tiene ese problema porque cada `avanzar`/`devolver` es una operación simétrica (push/pop) sobre el mismo dato, nunca un cálculo derivado.
 
-| Atributo | Tipo | Descripción |
-|---|---|---|
-| `radicado` | cadena | Número de radicación, ej. `11001-2026-0147`. |
-| `solicitante` | cadena | Propietario o apoderado. |
-| `dependencia` | cadena | Dependencia donde está el expediente ahora. |
-| `devoluciones` | entero | Número de veces devuelto. |
-| `diaRadicacion` | entero | Día hábil de radicación (para el plazo legal). |
-| `folio.numero` | entero | Consecutivo dentro del expediente, empieza en 1, nunca se reutiliza. |
-| `folio.estado` | cadena | `VIGENTE` o `ANULADO`. |
+**2. ¿Por qué los folios se modelan con una lista y no con una cola o una pila? Relación con R4.**
 
-## 4. Reglas de negocio
+R4 exige dos cosas a la vez: que los folios se puedan recorrer completos en su orden de creación (para `imprimirExpediente`) y que cualquiera de ellos —no solo el primero o el último— pueda anularse sin eliminarse ni renumerar los demás. Una cola solo expone el frente para sacar elementos (semántica de "atender y descartar"), y una pila solo expone el tope: ninguna de las dos permite "entrar hasta la mitad, cambiar un campo, y dejar todo lo demás intacto en su lugar" sin romper su propia disciplina de acceso. La lista enlazada sí: `agregar()` añade al final en O(1) gracias al puntero a cola, y `anularFolio()` recorre buscando el folio por número y solo cambia su campo `estado`, sin tocar el enlace de nodos ni el orden de los demás. Es la única de las tres estructuras cuyo contrato es "conservar todo, en orden, y permitir tocar cualquier elemento in-place".
 
-| ID | Regla |
-|---|---|
-| R1 | Orden de dependencias fijo, no se puede saltar ninguna. |
-| R2 | Devolución: retrocede a la dependencia inmediatamente anterior **según la ruta recorrida** y entra al final de esa bandeja. Un expediente en `RECEPCIÓN` no puede devolverse. |
-| R3 | 3 devoluciones → se archiva por desistimiento (sale del trámite, va a la lista de archivados). |
-| R4 | Folios consecutivos, sin reutilización. Anular **no** elimina ni renumera; solo cambia el estado a `ANULADO`. |
-| R5 | No puede avanzar a `RESOLUCIÓN` con menos de 4 folios vigentes. |
-| R6 | Plazo legal: 45 días hábiles desde radicación. Si se supera, se marca `VENCIDO` (aparece en reporte aparte) pero el trámite continúa. |
-| R7 | Cada bandeja tiene capacidad máxima de 20 expedientes. Si está llena, el expediente espera en la **cola de represamiento general** y entra apenas se libere un cupo. |
+**3. ¿Cómo se imprime la ruta recorrida sin destruir la pila? Estructuras auxiliares y costo O-grande.**
 
-**Trampa del caso:** anular un folio (R4) no es lo mismo que eliminarlo, y devolver un expediente no es lo mismo que restarle uno a un contador de etapa. Ambas reglas existen para que el trámite pueda reconstruirse tal como ocurrió — tu implementación debe reflejar esa diferencia.
+`rutaActual()` (en `Expediente`) usa una **pila auxiliar** temporal: mientras la pila original no esté vacía, se desapila un elemento y se apila en la auxiliar (esto invierte el orden). Luego se hace lo mismo a la inversa, desapilando de la auxiliar y apilando de vuelta en la original mientras se va guardando cada valor en una lista de salida — como se invierte dos veces, la pila original queda exactamente igual a como estaba, y la lista de salida queda en orden bottom→top (RECEPCION primero), listo para imprimir con `" > ".join(...)`. Costo: dos recorridos completos de la pila, O(n) en tiempo y O(n) en espacio auxiliar, con n = número de dependencias visitadas (como máximo 5, uno por dependencia del trámite).
 
-## 5. Requerimientos funcionales
+**4. Costo de `agregarFolio` en esta implementación. Si la lista solo guardara la cabeza sería O(n): ¿qué se mantiene actualizado para que sea O(1)?**
 
-| ID | Operación | Comportamiento |
-|---|---|---|
-| RF-01 | `radicar(solicitante, dia)` | Crea el expediente, lo encola en `RECEPCIÓN`, apila `RECEPCIÓN` en su ruta, agrega folio 1 (solicitud). |
-| RF-02 | `agregarFolio(radicado, descripcion)` | Agrega folio al final con el siguiente consecutivo (R4). |
-| RF-03 | `anularFolio(radicado, numero)` | Marca folio como `ANULADO`. Valida existencia y que no esté ya anulado. No renumera. |
-| RF-04 | `atenderSiguiente(dependencia)` | Toma el primer expediente de la bandeja (FIFO), lo deja listo para decisión. |
-| RF-05 | `avanzar(radicado)` | Envía a la siguiente dependencia, apila en su ruta, encola en destino. Valida R1, R5, R7. |
-| RF-06 | `devolver(radicado, observacion)` | Aplica R2: desapila la dependencia actual, encola al final de la bandeja anterior, incrementa contador, aplica R3 si corresponde. |
-| RF-07 | `imprimirExpediente(radicado)` | Recorre folios (número, descripción, estado) y muestra la ruta recorrida **sin destruirla**. |
-| RF-08 | `reporte(diaActual)` | Estado de bandejas, expedientes vencidos (R6) y métricas (sección 7). |
+En esta implementación `agregarFolio` es **O(1)**: la clase `Lista` guarda, además del puntero a la cabeza, un puntero a la **cola** (último nodo). Al agregar, si ya hay cola se enlaza `cola.siguiente = nuevoNodo` y se actualiza `cola = nuevoNodo`; si la lista estaba vacía, el nuevo nodo se vuelve cabeza y cola a la vez. Si esa referencia a la cola no existiera, cada `agregar()` tendría que recorrer la lista completa hasta el último nodo para enlazar ahí, lo que sí sería O(n). Lo único que hay que disciplinar es mantener el puntero a cola sincronizado en cada inserción (en este caso solo hay inserciones al final, nunca al medio ni eliminaciones reales, así que no hay otros puntos donde pueda desincronizarse).
 
-## 6. Restricciones de implementación
+**5. R7 crea una cola de represamiento general. ¿Qué problema aparecería si, en vez de represar, los expedientes se insertaran al frente de la bandeja destino apenas hubiera cupo?**
 
-- Lista, cola y pila propias.
-- Cola y pila **O(1)**.
-- `imprimirExpediente` (RF-07) no puede destruir la pila: si la vacías para imprimirla, debes dejarla exactamente igual al terminar.
-- La devolución (R2) se resuelve **consultando la pila de ruta**, nunca calculando la dependencia anterior con un índice o un `if` por dependencia.
+Rompería la equidad de atención que es la razón de ser de todas las colas del sistema. Si dos expedientes distintos quedaron represados esperando cupo en la misma dependencia, y el que se liberó primero se insertara "al frente" de la bandeja destino en vez de al final (o en vez de respetar el orden de la cola de represamiento), el expediente que lleva **menos** tiempo esperando podría terminar atendiéndose antes que uno que lleva más tiempo represado — exactamente lo contrario de "primero en llegar, primero en atenderse" que ya rige cada bandeja. Además, nuestra `Cola.remover()`/`frente()` solo permiten mirar y sacar el primer elemento de la cola general de represamiento en O(1); insertar arbitrariamente "al frente" de una bandeja destino rompería esa disciplina de un único punto de entrada/salida y obligaría a recorrer o reordenar colas para decidir a quién le toca, perdiendo la garantía O(1) de las operaciones de cola.
 
-## 7. Métricas del reporte
-
-- Expedientes en cada bandeja y en la cola de represamiento.
-- Expedientes por dependencia actual, archivados por R3 y resueltos.
-- Devoluciones por dependencia (para ver cuál devuelve más).
-- Expedientes vencidos según R6, con días transcurridos.
-- Por expediente: total de folios, vigentes y anulados.
-
-## 8. Formato de entrada/salida (ejemplo, ver PDF para el completo)
-
-Archivo `tramites.txt`:
-```
-DEPENDENCIAS: RECEPCION > JURIDICA > TECNICA > URBANISTICA > RESOLUCION
-CAPACIDAD_BANDEJA: 20 PLAZO_DIAS: 45
 ---
-RADICAR Ana Restrepo dia=1
-ATENDER RECEPCION
-AVANZAR 11001-2026-0001
-ATENDER JURIDICA
-DEVOLVER 11001-2026-0001 planos_sin_firma_de_ingeniero
-ANULAR 11001-2026-0001 2
-IMPRIMIR 11001-2026-0001
-REPORTE dia=50
-```
 
-Ejemplo de salida esperada:
-```
-> DEVOLVER 11001-2026-0001 planos_sin_firma_de_ingeniero
-ruta antes : RECEPCION > JURIDICA > TECNICA (tope = TECNICA)
-se desapila TECNICA -> regresa al final de la bandeja de JURIDICA
-devoluciones = 1 de 3
-```
-
-## 9. Preguntas de análisis (van en el informe)
-
-1. Por qué la ruta del expediente se modela con una pila y no con un contador de etapa; escenario de devoluciones sucesivas donde el contador daría un resultado incorrecto.
-2. Por qué los folios se modelan con una lista y no con cola o pila, en relación con R4.
-3. Cómo se imprime la ruta recorrida sin destruir la pila: estructuras auxiliares usadas y costo O-grande.
-4. Costo de `agregarFolio` en tu implementación; si tu lista solo guarda la cabeza el costo es O(n) — propone el cambio a O(1) y qué debe mantenerse actualizado.
-5. R7 crea una cola de represamiento: qué problema aparecería si, en lugar de represar, los expedientes se insertaran al frente de la bandeja destino apenas hubiera cupo.
-
-## 10. Rúbrica
-
-| Criterio | Puntos |
-|---|---|
-| Lista propia de folios (R4) | 20 |
-| Colas propias por dependencia (R1, R7) | 20 |
-| Pila propia de ruta (R2) | 20 |
-| Reglas R3, R5 y R6 | 15 |
-| Reportes y métricas | 15 |
-| Informe y justificación de las tres estructuras | 10 |
-
-## 11. Estructura de carpetas de este caso
-
-```
-Caso3/
-├── README.md                  <- este archivo
-├── Caso_Estudio_3.pdf
-├── Python/
-│   ├── Back/                  <- CuraduriaTramites en Python
-│   └── Front (posible)/       <- interfaz opcional sobre el back de Python
-└── TypeScript/
-    ├── Back/                  <- CuraduriaTramites en TypeScript (misma lógica, mismo formato de E/S)
-    └── Front (posible)/       <- interfaz opcional sobre el back de TypeScript
-```
-
-## 12. Entregables
-
-- [ ] `Python/Back` funcional, procesa `tramites.txt` y reproduce la salida esperada.
-- [ ] `TypeScript/Back` funcional, equivalente al de Python.
-- [ ] Informe con las 5 preguntas de análisis (sugerido: `Caso3/informe.md`).
-- [ ] (Opcional) Front en uno o ambos lenguajes.
-
-## 13. Notas del builder
-
-*(Espacio para que el builder registre decisiones propias.)*
+Cómo ejecutar: `python main.py tramites.txt` (Python) o `npx --yes tsx main.ts tramites.txt` (TypeScript), ambos dentro de su respectiva carpeta `Back/`.

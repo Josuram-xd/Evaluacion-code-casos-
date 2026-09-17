@@ -1,0 +1,14 @@
+{
+  "name": "caso3-curaduria-tramites",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CuraduriaTramites (Caso 3) - lista, cola y pila propias en TypeScript",
+  "scripts": {
+    "start": "ts-node main.ts tramites.txt"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "ts-node": "^10.9.2",
+    "@types/node": "^20.11.0"
+  }
+}
