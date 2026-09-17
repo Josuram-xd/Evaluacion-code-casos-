@@ -1,0 +1,14 @@
+{
+  "name": "caso3-curaduria-tramites-front",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Front minimo (HTML+CSS+JS) para CuraduriaTramites (Caso 3), conectado al Back por HTTP",
+  "scripts": {
+    "start": "tsx server.ts"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "tsx": "^4.7.0",
+    "@types/node": "^20.11.0"
+  }
+}

@@ -12,4 +12,9 @@ Esta carpeta tiene dos subcarpetas con roles distintos:
 
   Detalle de cada archivo en [`Back/NOTAS.md`](Back/NOTAS.md).
 
-- **`Front (posible)/`** — carpeta reservada, sin implementar. Es opcional porque el caso no la exige; queda documentada por si en algún momento se quiere envolver `Back/` en una ventana de escritorio (Tkinter) en vez de usarlo por consola. La guía de cómo hacerlo está en [`Front (posible)/NOTAS.md`](<Front (posible)/NOTAS.md>) — no reescribe la lógica de negocio, solo explica cómo conectarse a la de `Back/`.
+- **`Front (posible)/`** — opcional porque el caso no la exige, pero sí está implementada: una ventana de Tkinter (`app.py`) con un campo para escribir comandos y una consola de salida, que importa `CuraduriaTramites` y `procesar_linea` directamente de `../Back/main.py` (mismo parser de comandos, ninguna regla de negocio duplicada). Ejecutar:
+  ```
+  cd "Front (posible)"
+  python app.py
+  ```
+  Detalle en [`Front (posible)/NOTAS.md`](<Front (posible)/NOTAS.md>).

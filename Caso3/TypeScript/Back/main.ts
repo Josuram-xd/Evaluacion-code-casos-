@@ -1,15 +1,20 @@
 /**
  * Runner de comandos para CuraduriaTramites.
  *
+ * `procesarLinea` ejecuta una sola linea de comando y devuelve el texto de
+ * salida como string, sin imprimir nada: la reutiliza tanto este runner de
+ * consola como el front de `../Front (posible)/server.ts` (mismo servicio,
+ * mismo parser de comandos, ninguna regla de negocio duplicada).
+ *
  * Uso:
- *   npx ts-node main.ts tramites.txt
- *   (o compilado: npx tsc && node main.js tramites.txt)
+ *   npx --yes tsx main.ts tramites.txt
+ *   (o compilado: npx tsc && node dist/main.js tramites.txt)
  */
 
 import * as fs from "fs";
 import { CuraduriaTramites, Dependencia, DEPENDENCIAS, Expediente } from "./curaduria";
 
-function parseEncabezado(linea: string, sistemaActual: CuraduriaTramites | null): CuraduriaTramites | null {
+export function parseEncabezado(linea: string, sistemaActual: CuraduriaTramites | null): CuraduriaTramites | null {
   if (linea.startsWith("CAPACIDAD_BANDEJA")) {
     const partes = linea.replace(/:/g, " ").split(/\s+/).filter(Boolean);
     const capacidad = parseInt(partes[1], 10);
@@ -17,6 +22,23 @@ function parseEncabezado(linea: string, sistemaActual: CuraduriaTramites | null)
     return new CuraduriaTramites(capacidad, plazo);
   }
   return sistemaActual;
+}
+
+/** Lee solo el encabezado (antes de '---') y devuelve un CuraduriaTramites ya
+ * configurado. No ejecuta los comandos de ejemplo que vengan despues de '---'. */
+export function inicializarDesdeArchivo(rutaArchivo: string): CuraduriaTramites {
+  let sistema: CuraduriaTramites | null = null;
+  const contenido = fs.readFileSync(rutaArchivo, "utf-8");
+  for (const lineaCruda of contenido.split(/\r?\n/)) {
+    const linea = lineaCruda.split("#")[0].trim();
+    if (!linea) continue;
+    if (linea === "---") break;
+    sistema = parseEncabezado(linea, sistema);
+  }
+  if (!sistema) {
+    throw new Error(`no se encontro un encabezado CAPACIDAD_BANDEJA valido en ${rutaArchivo}`);
+  }
+  return sistema;
 }
 
 function ejecutar(rutaArchivo: string): void {
@@ -35,11 +57,14 @@ function ejecutar(rutaArchivo: string): void {
       sistema = parseEncabezado(linea, sistema);
       continue;
     }
-    procesarComando(sistema as CuraduriaTramites, linea);
+    console.log(procesarLinea(sistema as CuraduriaTramites, linea));
   }
 }
 
-function procesarComando(sistema: CuraduriaTramites, linea: string): void {
+/** Ejecuta una linea de comando sobre `sistema` y devuelve el texto de salida
+ * (una o varias lineas unidas con '\n'), sin imprimirlo. */
+export function procesarLinea(sistema: CuraduriaTramites, linea: string): string {
+  const salida: string[] = [];
   const tokens = linea.split(/\s+/);
   const comando = tokens[0].toUpperCase();
 
@@ -48,94 +73,94 @@ function procesarComando(sistema: CuraduriaTramites, linea: string): void {
     const indiceDia = resto.findIndex((t) => t.startsWith("dia="));
     const solicitante = resto.slice(0, indiceDia).join(" ");
     const dia = parseInt(resto[indiceDia].split("=")[1], 10);
-    console.log(`> RADICAR ${solicitante} dia=${dia}`);
+    salida.push(`> RADICAR ${solicitante} dia=${dia}`);
     const expediente = sistema.radicar(solicitante, dia);
-    console.log(`  ${expediente.radicado} creado | dependencia: ${expediente.dependencia} | folio 1: solicitud`);
+    salida.push(`  ${expediente.radicado} creado | dependencia: ${expediente.dependencia} | folio 1: solicitud`);
   } else if (comando === "FOLIO") {
     const [radicado, descripcion] = [tokens[1], tokens[2]];
-    console.log(`> FOLIO ${radicado} ${descripcion}`);
+    salida.push(`> FOLIO ${radicado} ${descripcion}`);
     try {
       const folio = sistema.agregarFolio(radicado, descripcion);
-      console.log(`  folio ${folio.numero} (${descripcion}) agregado, VIGENTE`);
+      salida.push(`  folio ${folio.numero} (${descripcion}) agregado, VIGENTE`);
     } catch (error) {
-      console.log(`  ERROR: ${(error as Error).message}`);
+      salida.push(`  ERROR: ${(error as Error).message}`);
     }
   } else if (comando === "ANULAR") {
     const radicado = tokens[1];
     const numero = parseInt(tokens[2], 10);
-    console.log(`> ANULAR ${radicado} ${numero}`);
+    salida.push(`> ANULAR ${radicado} ${numero}`);
     try {
       const folio = sistema.anularFolio(radicado, numero);
-      console.log(`  folio ${folio.numero} (${folio.descripcion}) -> ANULADO (no se renumera, R4)`);
+      salida.push(`  folio ${folio.numero} (${folio.descripcion}) -> ANULADO (no se renumera, R4)`);
     } catch (error) {
-      console.log(`  ERROR: ${(error as Error).message}`);
+      salida.push(`  ERROR: ${(error as Error).message}`);
     }
   } else if (comando === "ATENDER") {
     const dependencia = tokens[1] as Dependencia;
-    console.log(`> ATENDER ${dependencia}`);
+    salida.push(`> ATENDER ${dependencia}`);
     try {
       const expediente = sistema.atenderSiguiente(dependencia);
-      console.log(`  toma ${expediente.radicado} (${expediente.solicitante})`);
+      salida.push(`  toma ${expediente.radicado} (${expediente.solicitante})`);
     } catch (error) {
-      console.log(`  ERROR: ${(error as Error).message}`);
+      salida.push(`  ERROR: ${(error as Error).message}`);
     }
   } else if (comando === "AVANZAR") {
     const radicado = tokens[1];
-    console.log(`> AVANZAR ${radicado}`);
+    salida.push(`> AVANZAR ${radicado}`);
     try {
       const { destino, encolado } = sistema.avanzar(radicado);
       const estado = encolado ? `encolado en ${destino}` : `represado, en espera de cupo en ${destino}`;
-      console.log(`  ${radicado} avanza a ${destino} | ${estado}`);
+      salida.push(`  ${radicado} avanza a ${destino} | ${estado}`);
     } catch (error) {
-      console.log(`  ${(error as Error).message}`);
+      salida.push(`  ${(error as Error).message}`);
     }
   } else if (comando === "DEVOLVER") {
     const radicado = tokens[1];
     const observacion = tokens.slice(2).join(" ");
-    console.log(`> DEVOLVER ${radicado} ${observacion}`);
+    salida.push(`> DEVOLVER ${radicado} ${observacion}`);
     try {
       const expediente = sistema.buscarExpediente(radicado);
       const rutaAntes = expediente.rutaActual();
-      console.log(`  ruta antes : ${rutaAntes.join(" > ")} (tope = ${rutaAntes[rutaAntes.length - 1]})`);
+      salida.push(`  ruta antes : ${rutaAntes.join(" > ")} (tope = ${rutaAntes[rutaAntes.length - 1]})`);
       const { actual, anterior, archivado } = sistema.devolver(radicado, observacion);
-      console.log(`  se desapila ${actual} -> regresa al final de la bandeja de ${anterior}`);
+      salida.push(`  se desapila ${actual} -> regresa al final de la bandeja de ${anterior}`);
       if (archivado) {
-        console.log(`  devoluciones = 3 de 3 -> R3: ${radicado} se archiva por desistimiento`);
+        salida.push(`  devoluciones = 3 de 3 -> R3: ${radicado} se archiva por desistimiento`);
       } else {
-        console.log(`  devoluciones = ${expediente.devoluciones} de 3`);
+        salida.push(`  devoluciones = ${expediente.devoluciones} de 3`);
       }
     } catch (error) {
-      console.log(`  ${(error as Error).message}`);
+      salida.push(`  ${(error as Error).message}`);
     }
   } else if (comando === "IMPRIMIR") {
     const radicado = tokens[1];
-    console.log(`> IMPRIMIR ${radicado}`);
+    salida.push(`> IMPRIMIR ${radicado}`);
     try {
       const expediente: Expediente = sistema.buscarExpediente(radicado);
-      console.log(
+      salida.push(
         `  EXPEDIENTE ${expediente.radicado} | ${expediente.solicitante} | dependencia actual: ${expediente.dependencia}`
       );
       let vigentes = 0;
       let anulados = 0;
       for (const folio of expediente.folios) {
-        console.log(`    folio ${folio.numero} ${folio.descripcion.padEnd(28)} ${folio.estado}`);
+        salida.push(`    folio ${folio.numero} ${folio.descripcion.padEnd(28)} ${folio.estado}`);
         if (folio.estado === "VIGENTE") vigentes += 1;
         else anulados += 1;
       }
       const etiqueta = anulados === 1 ? "anulado" : "anulados";
-      console.log(`  folios: ${vigentes + anulados} total, ${vigentes} vigentes, ${anulados} ${etiqueta}`);
+      salida.push(`  folios: ${vigentes + anulados} total, ${vigentes} vigentes, ${anulados} ${etiqueta}`);
       const ruta = expediente.rutaActual();
-      console.log(`  ruta recorrida: ${ruta.join(" > ")} (pila intacta)`);
+      salida.push(`  ruta recorrida: ${ruta.join(" > ")} (pila intacta)`);
     } catch (error) {
-      console.log(`  ERROR: ${(error as Error).message}`);
+      salida.push(`  ERROR: ${(error as Error).message}`);
     }
   } else if (comando === "REPORTE") {
     const diaActual = parseInt(tokens[1].split("=")[1], 10);
-    console.log(`> REPORTE dia=${diaActual}`);
+    salida.push(`> REPORTE dia=${diaActual}`);
     const reporte = sistema.reporte(diaActual);
     const bandejasStr = DEPENDENCIAS.map((dep) => `${dep} ${reporte.bandejas[dep]}`).join(" | ");
-    console.log(`  Bandejas: ${bandejasStr}`);
-    console.log(
+    salida.push(`  Bandejas: ${bandejasStr}`);
+    salida.push(
       `  Represados: ${reporte.represados}  Archivados por R3: ${reporte.archivados}  Resueltos: ${reporte.resueltos}`
     );
     const devolucionesStr =
@@ -143,22 +168,26 @@ function procesarComando(sistema: CuraduriaTramites, linea: string): void {
         .filter(([, cantidad]) => cantidad > 0)
         .map(([dep, cantidad]) => `${dep} ${cantidad}`)
         .join(", ") || "ninguna";
-    console.log(`  Devoluciones por dependencia: ${devolucionesStr}`);
+    salida.push(`  Devoluciones por dependencia: ${devolucionesStr}`);
     if (reporte.vencidos.length > 0) {
       const vencidosStr = reporte.vencidos.map(([r, d]) => `${r} (${d} dias habiles)`).join(", ");
-      console.log(`  VENCIDOS (R6): ${vencidosStr}`);
+      salida.push(`  VENCIDOS (R6): ${vencidosStr}`);
     } else {
-      console.log("  VENCIDOS (R6): ninguno");
+      salida.push("  VENCIDOS (R6): ninguno");
     }
   } else {
-    console.log(`> ${linea}`);
-    console.log(`  comando desconocido: ${comando}`);
+    salida.push(`> ${linea}`);
+    salida.push(`  comando desconocido: ${comando}`);
   }
+
+  return salida.join("\n");
 }
 
-const archivo = process.argv[2];
-if (!archivo) {
-  console.log("Uso: ts-node main.ts <archivo_de_comandos>");
-  process.exit(1);
+if (require.main === module) {
+  const archivo = process.argv[2];
+  if (!archivo) {
+    console.log("Uso: tsx main.ts <archivo_de_comandos>");
+    process.exit(1);
+  }
+  ejecutar(archivo);
 }
-ejecutar(archivo);

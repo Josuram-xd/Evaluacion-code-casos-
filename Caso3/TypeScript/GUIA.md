@@ -14,4 +14,10 @@ Esta carpeta tiene dos subcarpetas con roles distintos:
 
   Detalle de cada archivo en [`Back/NOTAS.md`](Back/NOTAS.md).
 
-- **`Front (posible)/`** — carpeta reservada, sin implementar. Es opcional porque el caso no la exige; queda documentada por si en algún momento se quiere envolver `Back/` en una página web (HTML + CSS) en vez de usarlo por consola. La guía de cómo hacerlo está en [`Front (posible)/NOTAS.md`](<Front (posible)/NOTAS.md>) — no reescribe la lógica de negocio, solo explica cómo conectarse a la de `Back/`.
+- **`Front (posible)/`** — opcional porque el caso no la exige, pero sí está implementada: una página HTML+CSS con un input de comando y una consola de salida, servida por un `server.ts` minimo (módulo `http` de Node, sin Express) que importa `CuraduriaTramites` y `procesarLinea` directamente de `../Back/main.ts` (mismo parser de comandos, ninguna regla de negocio duplicada). Ejecutar:
+  ```
+  cd "Front (posible)"
+  npm install
+  npx --yes tsx server.ts
+  ```
+  y abrir `http://localhost:3000`. Detalle en [`Front (posible)/NOTAS.md`](<Front (posible)/NOTAS.md>).

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>CuraduriaTramites - consola</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <h1>CuraduriaTramites</h1>
+  <p class="ayuda">
+    Ejecuta los mismos comandos del PDF, por ejemplo: <code>RADICAR Ana Restrepo dia=1</code>,
+    <code>FOLIO 11001-2026-0001 planos_arquitectonicos</code>, <code>ATENDER RECEPCION</code>,
+    <code>AVANZAR 11001-2026-0001</code>, <code>REPORTE dia=1</code>.
+  </p>
+
+  <pre id="salida"></pre>
+
+  <form id="formulario">
+    <input id="linea" type="text" autocomplete="off" placeholder="Escribe un comando..." autofocus />
+    <button type="submit">Ejecutar</button>
+    <button type="button" id="reiniciar">Reiniciar</button>
+  </form>
+
+  <script src="app.js"></script>
+</body>
+</html>
