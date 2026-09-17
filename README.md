@@ -19,26 +19,26 @@ CasoN/
 ├── README.md                          De qué trata el caso + las respuestas al apartado 8 del PDF
 ├── Caso_Estudio_N.pdf                 Enunciado original — es la fuente de verdad si algo en el README queda corto
 ├── Python/
-│   ├── GUIA.md                        Qué hay en Back/ y cómo se conecta el Front en Tkinter
+│   ├── README.md                      Qué hay en Back/ y cómo se conecta el Front en Tkinter
 │   ├── Back/                          Implementación completa, funciona por consola
-│   │   └── NOTAS.md                   Qué hace cada archivo y cómo correrlo
+│   │   └── README.md                  Qué hace cada archivo y cómo correrlo
 │   └── Front (posible)/               Interfaz Tkinter funcional, reutiliza Back/ tal cual
-│       └── NOTAS.md                   Cómo se conecta con el Back
-└── TypeScript/                        Misma idea que Python/, con GUIA.md y NOTAS.md propios
-    ├── GUIA.md
+│       └── README.md                  Cómo se conecta con el Back
+└── TypeScript/                        Misma idea que Python/, con su propio README.md en cada carpeta
+    ├── README.md
     ├── Back/
-    │   └── NOTAS.md
+    │   └── README.md
     └── Front (posible)/               Interfaz web (HTML+CSS+servidor mínimo), reutiliza Back/ tal cual
-        └── NOTAS.md                   Cómo se conecta con el Back
+        └── README.md                  Cómo se conecta con el Back
 ```
 
-Ningún caso exige una interfaz gráfica utilizable — todos se resuelven leyendo un archivo de comandos y escribiendo la salida por consola —, así que `Back/` ya es una solución completa y autosuficiente por sí sola. Por eso las carpetas se llaman `Front (posible)/`: no eran obligatorias, eran opcionales. Aun así, cada caso trae una interfaz funcional en ambos lenguajes (Tkinter en Python, HTML+CSS con un servidor mínimo en TypeScript) que reutiliza `Back/` sin duplicar ninguna regla de negocio — el detalle de cómo se conecta cada una está en el `GUIA.md` y el `NOTAS.md` correspondientes.
+Ningún caso exige una interfaz gráfica utilizable — todos se resuelven leyendo un archivo de comandos y escribiendo la salida por consola —, así que `Back/` ya es una solución completa y autosuficiente por sí sola. Por eso las carpetas se llaman `Front (posible)/`: no eran obligatorias, eran opcionales. Aun así, cada caso trae una interfaz funcional en ambos lenguajes (Tkinter en Python, HTML+CSS con un servidor mínimo en TypeScript) que reutiliza `Back/` sin duplicar ninguna regla de negocio — el detalle de cómo se conecta cada una está en el `README.md` de `Python/`, `TypeScript/` y sus respectivas `Back/`/`Front (posible)/`.
 
 ## Por dónde empezar a leer
 
 1. Este README (ya vas por acá).
 2. El `README.md` del caso que te interese — trae el contexto de negocio, qué pide el PDF y las respuestas a las preguntas de análisis.
-3. `Python/GUIA.md` o `TypeScript/GUIA.md` del mismo caso, según el lenguaje que quieras repasar — señala en qué orden conviene abrir los archivos de `Back/`.
+3. El `README.md` de `Python/` o `TypeScript/` del mismo caso, según el lenguaje que quieras repasar — señala en qué orden conviene abrir los archivos de `Back/`.
 4. El código en sí, y si algo no cuadra, el PDF (`Caso_Estudio_N.pdf`) manda sobre cualquier resumen.
 
 ## Reglas comunes a los tres casos
