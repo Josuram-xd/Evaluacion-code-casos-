@@ -46,7 +46,7 @@ npx --yes tsx main.ts tramites.txt      # alternativa: npx tsc && node dist/main
 
 Las dos versiones leen el mismo [`tramites.txt`](Python/Back/tramites.txt) y quedaron verificadas con la misma salida.
 
-Si quieres reemplazar la consola por una interfaz, [`Python/GUIA.md`](<Python/GUIA.md>) explica cómo montarla en Tkinter y [`TypeScript/GUIA.md`](<TypeScript/GUIA.md>) en HTML+CSS, en ambos casos llamando a `CuraduriaTramites` tal cual está, sin duplicar reglas.
+El caso no exige una interfaz gráfica utilizable, así que `Back/` ya es una solución completa por sí sola — de ahí que las carpetas de interfaz se llamen `Front (posible)/`, algo opcional y no una obligación del enunciado. Aun así, cada lenguaje trae una funcional: Tkinter en Python (`Python/Front (posible)/app.py`) y HTML+CSS con un servidor mínimo en TypeScript (`TypeScript/Front (posible)/server.ts` + `index.html`), ambas llamando a `CuraduriaTramites` tal cual está, sin duplicar reglas. [`Python/GUIA.md`](<Python/GUIA.md>) y [`TypeScript/GUIA.md`](<TypeScript/GUIA.md>) explican cómo se conecta cada una.
 
 ## Preguntas de análisis
 

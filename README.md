@@ -19,20 +19,20 @@ CasoN/
 ├── README.md                          De qué trata el caso + las respuestas al apartado 8 del PDF
 ├── Caso_Estudio_N.pdf                 Enunciado original — es la fuente de verdad si algo en el README queda corto
 ├── Python/
-│   ├── GUIA.md                        Qué hay en Back/ y qué haría falta para un Front en Tkinter
+│   ├── GUIA.md                        Qué hay en Back/ y cómo se conecta el Front en Tkinter
 │   ├── Back/                          Implementación completa, funciona por consola
 │   │   └── NOTAS.md                   Qué hace cada archivo y cómo correrlo
-│   └── Front (posible)/
-│       └── NOTAS.md                   Cómo se conectaría una interfaz Tkinter con el Back (sin construirla)
+│   └── Front (posible)/               Interfaz Tkinter funcional, reutiliza Back/ tal cual
+│       └── NOTAS.md                   Cómo se conecta con el Back
 └── TypeScript/                        Misma idea que Python/, con GUIA.md y NOTAS.md propios
     ├── GUIA.md
     ├── Back/
     │   └── NOTAS.md
-    └── Front (posible)/
-        └── NOTAS.md
+    └── Front (posible)/               Interfaz web (HTML+CSS+servidor mínimo), reutiliza Back/ tal cual
+        └── NOTAS.md                   Cómo se conecta con el Back
 ```
 
-Ningún caso pedía una interfaz gráfica utilizable — todos se resuelven leyendo un archivo de comandos y escribiendo la salida por consola — así que el trabajo real está en `Back/`. Las carpetas `Front (posible)/` quedan documentadas pero sin implementar, por si algún día vale la pena ponerle una cara.
+Ningún caso exige una interfaz gráfica utilizable — todos se resuelven leyendo un archivo de comandos y escribiendo la salida por consola —, así que `Back/` ya es una solución completa y autosuficiente por sí sola. Por eso las carpetas se llaman `Front (posible)/`: no eran obligatorias, eran opcionales. Aun así, cada caso trae una interfaz funcional en ambos lenguajes (Tkinter en Python, HTML+CSS con un servidor mínimo en TypeScript) que reutiliza `Back/` sin duplicar ninguna regla de negocio — el detalle de cómo se conecta cada una está en el `GUIA.md` y el `NOTAS.md` correspondientes.
 
 ## Por dónde empezar a leer
 

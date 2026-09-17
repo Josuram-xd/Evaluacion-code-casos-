@@ -39,7 +39,7 @@ npx tsc && node dist/main.js central.txt   # o: npx ts-node main.ts central.txt
 
 Ambas versiones quedaron verificadas contra el mismo `central.txt`, salida idéntica carácter por carácter.
 
-¿Interfaz en vez de consola? [`Python/GUIA.md`](<Python/GUIA.md>) y [`TypeScript/GUIA.md`](<TypeScript/GUIA.md>) explican cómo se montaría (Tkinter / HTML+CSS) reutilizando esta misma capa de servicio, sin reescribir ninguna regla.
+El caso no exige una interfaz gráfica utilizable, así que `Back/` ya es una solución completa por sí sola — de ahí que las carpetas de interfaz se llamen `Front (posible)/`, algo opcional y no una obligación del enunciado. Aun así, cada lenguaje trae una funcional: Tkinter en Python (`Python/Front (posible)/app.py`) y HTML+CSS con un servidor mínimo en TypeScript (`TypeScript/Front (posible)/server.ts` + `index.html`), ambas reutilizando esta misma capa de servicio (`CentralAscensores`) tal cual, sin reescribir ninguna regla. [`Python/GUIA.md`](<Python/GUIA.md>) y [`TypeScript/GUIA.md`](<TypeScript/GUIA.md>) explican cómo se conecta cada una.
 
 ## Preguntas de análisis
 
