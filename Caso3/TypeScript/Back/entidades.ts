@@ -3,6 +3,15 @@
  * propio de un expediente individual (sus folios, su ruta). La
  * orquestacion entre expedientes (bandejas por dependencia, represamiento,
  * reglas R1-R7) vive en servicio.ts (curaduria.ts), no aqui.
+ Taller-Evaluativo-Caso1/
+├── index.html
+├── package.json
+├── tsconfig.json
+└── src/
+    ├── data-structures.ts
+    ├── kitchen-system.ts
+    ├── app.ts
+    └── style.css
  */
 
 import { Pila, Lista } from "./estructuras";
