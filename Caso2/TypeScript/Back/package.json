@@ -1,0 +1,14 @@
+{
+  "name": "caso2-central-ascensores",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CentralAscensores - implementacion de repaso en TypeScript (lista + cola + pila propias)",
+  "scripts": {
+    "start": "ts-node main.ts central.txt"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "ts-node": "^10.9.0",
+    "@types/node": "^20.11.0"
+  }
+}
