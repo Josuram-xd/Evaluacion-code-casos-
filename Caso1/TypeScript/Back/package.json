@@ -1,0 +1,15 @@
+{
+  "name": "caso1-bicitaller",
+  "version": "1.0.0",
+  "private": true,
+  "description": "BiciTaller (Caso 1) en TypeScript - lista, cola y pila propias",
+  "scripts": {
+    "start": "ts-node main.ts taller.txt",
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "ts-node": "^10.9.0",
+    "@types/node": "^20.0.0"
+  }
+}
